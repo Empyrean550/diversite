@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Diversité alimentaire</title>
+<meta name="theme-color" content="#2E5B3B">
+<meta name="description" content="Suivi de la diversité alimentaire et des nutriments">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF1E8; --surface:#FBFCF8; --ink:#1E2620; --muted:#5B665D; --line:#D3DACB;
+  --primary:#2E5B3B; --primary-ink:#FFFFFF; --soft:#E1E8DA;
+  --low:#C2412D; --mid:#B8741A; --good:#3C7D4C;
+  --f-cer:#C99A3B; --f-ver:#3F8A4A; --f-col:#E0703A; --f-leg:#8A4B2F; --f-pro:#5A6FA8;
+  --f-fru:#C23C6B; --f-noi:#7A6A3A; --f-lai:#6E8C99; --f-aut:#8C8C7A; --f-pla:#A05BB0;
+  --display:"Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --body:"Atkinson Hyperlegible", "Segoe UI", system-ui, -apple-system, sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141915; --surface:#1D241F; --ink:#E6EBE2; --muted:#A2AD9F; --line:#334035;
+    --primary:#93CBA0; --primary-ink:#0F1F12; --soft:#26302A;
+    --low:#F08A76; --mid:#E8B260; --good:#93CBA0;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141915; --surface:#1D241F; --ink:#E6EBE2; --muted:#A2AD9F; --line:#334035;
+  --primary:#93CBA0; --primary-ink:#0F1F12; --soft:#26302A;
+  --low:#F08A76; --mid:#E8B260; --good:#93CBA0;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+main{max-width:640px;margin:0 auto;padding:16px 16px 110px}
+h1,h2,h3{font-family:var(--display);margin:0;line-height:1.15}
+h1{font-size:1.6rem;font-weight:800;letter-spacing:-.01em}
+h2{font-size:1.15rem;font-weight:600;margin:28px 0 10px}
+p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--primary);outline-offset:2px;border-radius:6px}
+.muted{color:var(--muted)}
+.small{font-size:.875rem}
+.tab{display:none}
+.tab.on{display:block}
+
+/* bottom nav */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom,0px);z-index:10}
+nav.tabs .in{max-width:640px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr)}
+nav.tabs button{background:none;border:0;padding:10px 4px 12px;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--muted);font-size:.8rem}
+nav.tabs button .ic{font-size:1.3rem;line-height:1}
+nav.tabs button[aria-selected="true"]{color:var(--primary);font-weight:700}
+
+/* header date */
+.datebar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:14px}
+.datebar button{background:var(--surface);border:1px solid var(--line);width:44px;height:44px;border-radius:50%;font-size:1.2rem}
+.datebar button:disabled{opacity:.35;cursor:default}
+.datebar .lbl{text-align:center}
+.datebar .lbl small{display:block;color:var(--muted);font-size:.8rem}
+
+.seg{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.seg::-webkit-scrollbar{display:none}
+.seg button{flex:0 0 auto;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px}
+.seg button[aria-pressed="true"]{background:var(--primary);color:var(--primary-ink);border-color:var(--primary);font-weight:700}
+
+.shortcuts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.shortcuts button{text-align:left;background:var(--soft);border:1px dashed var(--line);border-radius:12px;padding:10px 12px}
+.shortcuts button b{display:block;font-family:var(--display);font-weight:600}
+.shortcuts button span{font-size:.8rem;color:var(--muted)}
+
+.search{width:100%;margin-top:16px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--surface)}
+.fams{display:flex;gap:6px;overflow-x:auto;margin:10px 0 4px;scrollbar-width:none}
+.fams::-webkit-scrollbar{display:none}
+.fams button{flex:0 0 auto;border:0;background:none;padding:6px 10px;border-radius:8px;color:var(--muted);font-size:.9rem}
+.fams button[aria-pressed="true"]{background:var(--soft);color:var(--ink);font-weight:700}
+
+.foods{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 11px;font-size:.92rem;text-align:left}
+.chip .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+.chip .n{background:var(--primary);color:var(--primary-ink);border-radius:999px;font-size:.72rem;padding:0 6px;font-weight:700}
+
+.day{margin-top:8px;background:var(--surface);border:1px solid var(--line);border-radius:14px}
+.day .meal{padding:12px 14px;border-top:1px solid var(--line)}
+.day .meal:first-child{border-top:0}
+.day .meal h3{font-size:.95rem;font-weight:600;margin-bottom:6px}
+.day .items{display:flex;flex-wrap:wrap;gap:6px}
+.day .it{display:inline-flex;align-items:center;gap:4px;background:var(--soft);border-radius:8px;padding:4px 4px 4px 9px;font-size:.88rem}
+.day .it button{border:0;background:none;width:28px;height:28px;border-radius:6px;color:var(--muted);font-size:1rem}
+.empty{padding:16px;color:var(--muted)}
+
+details.box{margin-top:14px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:4px 14px}
+details.box summary{padding:10px 0;cursor:pointer;font-weight:700}
+details.box .body{padding:4px 0 14px;display:grid;gap:10px}
+.field label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:4px}
+.field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+.toggles{display:flex;flex-wrap:wrap;gap:6px}
+.toggles button{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:5px 9px;font-size:.85rem}
+.toggles button[aria-pressed="true"]{background:var(--primary);color:var(--primary-ink);border-color:var(--primary)}
+.btn{border:0;background:var(--primary);color:var(--primary-ink);border-radius:10px;padding:11px 16px;font-weight:700}
+.btn.ghost{background:none;color:var(--ink);border:1px solid var(--line)}
+.btn.danger{background:var(--low);color:#fff}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+
+/* diversity hero */
+.hero{margin-top:6px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px 18px}
+.hero .big{display:flex;align-items:baseline;gap:10px}
+.hero .big strong{font-family:var(--display);font-weight:800;font-size:4.2rem;line-height:.9;letter-spacing:-.03em}
+.hero .big span{font-family:var(--display);font-size:1.4rem;color:var(--muted)}
+.basket{display:grid;grid-template-columns:repeat(10,1fr);gap:6px;margin:18px 0 12px}
+.basket i{aspect-ratio:1;border-radius:50%;border:1.5px dashed var(--line);display:block}
+.basket i.f{border:0}
+.names{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:.85rem;color:var(--muted)}
+.names span{display:inline-flex;align-items:center;gap:5px}
+.names span .dot{width:7px;height:7px;border-radius:50%}
+
+.famrow{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;padding:14px;background:var(--surface);border:1px solid var(--line);border-radius:14px;margin-top:8px;border-left:5px solid var(--line)}
+.famrow .em{font-size:1.5rem;grid-row:span 3}
+.famrow h3{font-size:1rem;font-weight:600;display:flex;justify-content:space-between;gap:8px}
+.famrow h3 small{font-family:var(--body);font-weight:700;font-size:.8rem}
+.famrow .sug{font-size:.9rem}
+
+/* nutrients */
+.summary{display:flex;gap:8px;margin-top:10px}
+.summary div{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}
+.summary b{display:block;font-family:var(--display);font-size:1.6rem;font-weight:800;line-height:1.1}
+.ncard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:8px}
+.ncard .top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.ncard .top h3{font-size:1.02rem;font-weight:600}
+.ncard .badge{font-size:.78rem;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.bar{height:6px;background:var(--soft);border-radius:999px;margin:8px 0;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:999px}
+.ncard .why{font-size:.88rem;color:var(--muted)}
+.ncard .lst{font-size:.9rem;margin-top:6px}
+.ncard .lst b{font-weight:700}
+.sugg{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.sugg span{font-size:.85rem;border:1px solid var(--line);border-radius:8px;padding:3px 8px}
+.sugg span.k{border-color:var(--good);color:var(--good);font-weight:700}
+.compact{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.compact span{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 11px;font-size:.88rem}
+.note{font-size:.82rem;color:var(--muted);margin-top:22px}
+.st-low{color:var(--low)} .bg-low{background:var(--low);color:#fff}
+.st-mid{color:var(--mid)} .bg-mid{background:var(--mid);color:#fff}
+.st-good{color:var(--good)} .bg-good{background:var(--good);color:var(--primary-ink)}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%) translateY(20px);bottom:calc(84px + env(safe-area-inset-bottom,0px));
+  background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:.92rem;opacity:0;pointer-events:none;transition:opacity .2s, transform .2s;z-index:20;max-width:90vw}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (prefers-reduced-motion: reduce){.toast{transition:none}}
+</style>
+</head>
+<body>
+<main>
+  <!-- AJOUTER -->
+  <section class="tab on" id="tab-add" aria-labelledby="t-add">
+    <div class="datebar">
+      <button id="prevDay" aria-label="Jour précédent">‹</button>
+      <div class="lbl"><h1 id="dayLabel">Aujourd'hui</h1><small id="dayCount"></small></div>
+      <button id="nextDay" aria-label="Jour suivant">›</button>
+    </div>
+    <div class="seg" id="meals" role="group" aria-label="Repas"></div>
+    <div class="shortcuts" id="shortcuts"></div>
+    <input class="search" id="search" type="search" placeholder="Chercher un aliment…" autocomplete="off">
+    <div class="fams" id="famFilter" role="group" aria-label="Familles"></div>
+    <div class="foods" id="foods"></div>
+
+    <h2>Ce que tu as mangé</h2>
+    <div class="day" id="dayLog"></div>
+
+    <details class="box">
+      <summary>Ajouter un aliment perso</summary>
+      <div class="body">
+        <div class="field"><label for="cName">Nom</label><input id="cName" placeholder="ex. Sauce tahini"></div>
+        <div class="field"><label for="cFam">Famille</label><select id="cFam"></select></div>
+        <div class="field"><label>Riche en (facultatif)</label><div class="toggles" id="cNut"></div></div>
+        <div class="field"><label>Contient beaucoup de (facultatif)</label><div class="toggles" id="cFlag"></div></div>
+        <div><button class="btn" id="cSave">Ajouter l'aliment</button></div>
+      </div>
+    </details>
+
+    <details class="box">
+      <summary>Sauvegarde des données</summary>
+      <div class="body">
+        <p class="small muted">Tes données restent dans ce navigateur, sur cet appareil. Copie-les de temps en temps pour ne rien perdre, ou pour les transférer sur un autre appareil.</p>
+        <div class="row"><button class="btn ghost" id="exportBtn">Copier mes données</button></div>
+        <div class="field"><label for="importTxt">Restaurer depuis une copie</label><textarea id="importTxt" rows="3" placeholder="Colle ici tes données copiées"></textarea></div>
+        <div class="row"><button class="btn ghost" id="importBtn">Restaurer</button><button class="btn danger" id="resetBtn">Tout effacer</button></div>
+      </div>
+    </details>
+  </section>
+
+  <!-- DIVERSITÉ -->
+  <section class="tab" id="tab-div">
+    <h1>Diversité</h1>
+    <p class="muted small" style="margin-top:4px">Sur les 7 derniers jours</p>
+    <div class="hero">
+      <div class="big"><strong id="plantCount">0</strong><span>/ 30 végétaux</span></div>
+      <p class="muted small" id="plantMsg" style="margin-top:6px"></p>
+      <div class="basket" id="basket" aria-hidden="true"></div>
+      <div class="names" id="plantNames"></div>
+    </div>
+    <h2>Ton souper en 5 familles</h2>
+    <div id="supperFams"></div>
+    <h2>Le reste de ta semaine</h2>
+    <div id="otherFams"></div>
+  </section>
+
+  <!-- NUTRIMENTS -->
+  <section class="tab" id="tab-nut">
+    <h1>Nutriments</h1>
+    <p class="muted small" style="margin-top:4px">Estimation grossière sur les 7 derniers jours</p>
+    <div id="nutBody"></div>
+    <p class="note">Chaque aliment noté compte comme une portion : c'est une tendance pour t'aider à varier, pas une mesure précise ni un diagnostic. Seule une prise de sang peut confirmer un vrai manque. ✓ = aliment que tu as déjà mangé.</p>
+  </section>
+</main>
+
+<nav class="tabs" aria-label="Sections">
+  <div class="in" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="add"><span class="ic">＋</span>Ajouter</button>
+    <button role="tab" aria-selected="false" data-tab="div"><span class="ic">🥬</span>Diversité</button>
+    <button role="tab" aria-selected="false" data-tab="nut"><span class="ic">◐</span>Nutriments</button>
+  </div>
+</nav>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- Données de référence ---------- */
+const FAMS = {
+  cer:{n:"Glucides de qualité", e:"🌾", c:"--f-cer"},
+  ver:{n:"Verdure", e:"🥬", c:"--f-ver"},
+  col:{n:"Légumes colorés", e:"🥕", c:"--f-col"},
+  leg:{n:"Légumineuses", e:"🫘", c:"--f-leg"},
+  pro:{n:"Protéine principale", e:"🍳", c:"--f-pro"},
+  fru:{n:"Fruits", e:"🍎", c:"--f-fru"},
+  noi:{n:"Noix et graines", e:"🌰", c:"--f-noi"},
+  lai:{n:"Laitiers et boissons", e:"🥛", c:"--f-lai"},
+  aut:{n:"Autres", e:"🧂", c:"--f-aut"},
+  pla:{n:"Plaisirs", e:"🍪", c:"--f-pla"}
+};
+const SUPPER = ["cer","ver","col","leg","pro"];
+
+const NUT = [
+  ["P","Protéines","Construire et réparer tes muscles.",28],
+  ["F","Fibres","Digestion, satiété et énergie stable.",28],
+  ["O","Oméga-3","Cœur, cerveau et récupération.",7],
+  ["A","Vitamine A","Vision, peau et immunité.",10],
+  ["C","Vitamine C","Immunité ; aide à absorber le fer des végétaux.",10],
+  ["D","Vitamine D","Os, muscles et immunité.",14],
+  ["E","Vitamine E","Protège tes cellules (antioxydant).",7],
+  ["K","Vitamine K","Coagulation et solidité des os.",10],
+  ["B9","Folate (B9)","Fabrication des cellules et énergie.",10],
+  ["B12","Vitamine B12","Nerfs et globules rouges.",10],
+  ["Fe","Fer","Transport de l'oxygène et énergie.",12],
+  ["Ca","Calcium","Os et contraction musculaire.",14],
+  ["Mg","Magnésium","Muscles, sommeil et récupération.",12],
+  ["Zn","Zinc","Immunité, récupération et hormones.",8],
+  ["Po","Potassium","Pression sanguine et crampes.",12],
+  ["I","Iode","Thyroïde et métabolisme.",6]
+];
+const NOTES = {
+  D:"Au Québec, de l'automne au printemps, le soleil ne suffit pas à en produire. Parles-en à un professionnel de la santé si ce point reste bas.",
+  B12:"On la trouve presque seulement dans les produits animaux et les aliments enrichis."
+};
+const WATCH = [
+  ["s","Sucres ajoutés","Énergie rapide qui donne des fringales."],
+  ["n","Sel","Rétention d'eau et pression sanguine."],
+  ["g","Gras saturés","À limiter pour la santé du cœur."]
+];
+
+const RAW = `
+riz_brun|Riz brun|cer|1|F:1,Mg:1|
+riz_blanc|Riz blanc|cer|1||
+quinoa|Quinoa|cer|1|P:1,F:1,Mg:2,Fe:1,B9:1,Zn:1|
+cereales_mel|Céréales mélangées (orge, boulgour…)|cer|1|F:2,Mg:1,Fe:1|
+patate_douce|Patate douce|cer|1|A:2,C:1,F:1,Po:2|
+pomme_de_terre|Pomme de terre|cer|1|C:1,Po:2,F:1|
+avoine|Flocons d'avoine|cer|1|F:2,Mg:2,Fe:1,Zn:1|
+granola|Granola Quaker Croque Nature|cer|1|F:1,Fe:1|s:1,g:1
+pain_proteine|Pain protéiné|cer|1|P:1,F:1|
+pain_complet|Pain complet|cer|1|F:1,Mg:1,Fe:1|
+pates_completes|Pâtes de blé entier|cer|1|F:1,Mg:1|
+pates|Pâtes blanches|cer|1||
+sarrasin|Sarrasin|cer|1|F:1,Mg:2|
+couscous|Couscous|cer|1||
+epinards|Épinards|ver|1|A:2,K:2,B9:2,Fe:1,Mg:2,C:1,Ca:1,Po:1|
+kale|Kale (chou frisé)|ver|1|A:2,C:2,K:2,Ca:1|
+roquette|Roquette|ver|1|K:2,A:1,B9:1,Ca:1|
+chou_noir|Chou noir (cavolo nero)|ver|1|A:2,C:2,K:2,Ca:1|
+brocoli|Brocoli|ver|1|C:2,K:2,B9:1,F:1,Po:1|
+haricots_verts|Haricots verts|ver|1|K:1,C:1,F:1|
+laitue|Laitue romaine|ver|1|A:1,K:2,B9:1|
+asperges|Asperges|ver|1|K:2,B9:2|
+courgette|Courgette|ver|1|C:1,Po:1|
+bok_choy|Bok choy|ver|1|A:2,C:2,K:2,Ca:1|
+petits_pois|Petits pois|ver|1|P:1,F:2,C:1,K:1|
+choux_bruxelles|Choux de Bruxelles|ver|1|C:2,K:2,F:1,B9:1|
+poivron|Poivron|col|1|C:2,A:1|
+mais|Maïs|col|1|F:1|
+radis|Radis|col|1|C:1|
+carotte|Carotte|col|1|A:2,K:1,Po:1,F:1|
+tomate|Tomate / tomates cerises|col|1|C:1,Po:1,A:1|
+chou_rouge|Chou rouge|col|1|C:2,K:1,F:1|
+betterave|Betterave|col|1|B9:2,Po:1,F:1|
+champignons|Champignons|col|1|Po:1|
+oignon|Oignon|col|1||
+courge|Courge (butternut…)|col|1|A:2,C:1,Po:1,F:1|
+aubergine|Aubergine|col|1|F:1|
+concombre|Concombre|col|1|K:1|
+chou_fleur|Chou-fleur|col|1|C:2,K:1,B9:1|
+pois_chiches|Pois chiches|leg|1|P:1,F:2,B9:2,Fe:1,Mg:1,Zn:1|
+lentilles|Lentilles|leg|1|P:2,F:2,B9:2,Fe:2,Po:1,Zn:1,Mg:1|
+edamame|Edamames|leg|1|P:2,F:2,B9:2,K:2,Fe:1,Mg:1,O:1|
+haricots_noirs|Haricots noirs|leg|1|P:1,F:2,B9:2,Fe:1,Mg:2,Po:1|
+haricots_rouges|Haricots rouges|leg|1|P:1,F:2,B9:2,Fe:1,Po:2,Mg:1|
+hummus|Hummus|leg|1|P:1,F:1,B9:1,Fe:1|
+tofu|Tofu|pro|1|P:2,Ca:2,Fe:2,Mg:1,Zn:1|
+pvt|PVT (protéine végétale texturée)|pro|1|P:2,F:1,Fe:1,Mg:1,Zn:1|
+tempeh|Tempeh|pro|1|P:2,F:1,Fe:1,Mg:1|
+seitan|Seitan|pro|0|P:2,Fe:1|
+burger_vege|Burger végé|pro|0|P:1,Fe:1|n:1
+oeufs|Œufs|pro|0|P:2,B12:1,D:1,A:1,I:1,Zn:1|
+saumon|Saumon|pro|0|P:2,O:2,D:2,B12:2,Po:1|
+sardines|Sardines|pro|0|P:2,O:2,D:2,B12:2,Ca:2|
+thon|Thon|pro|0|P:2,B12:2,D:1,O:1|
+crevettes|Crevettes|pro|0|P:2,B12:1,Zn:1,I:2|
+poulet|Poulet|pro|0|P:2,B12:1,Zn:1|
+boeuf|Bœuf|pro|0|P:2,Fe:2,Zn:2,B12:2|g:1
+chia|Graines de chia|noi|1|O:2,F:2,Ca:1,Mg:1|
+lin|Graines de lin moulues|noi|1|O:2,F:2,Mg:1|
+chanvre|Graines de chanvre|noi|1|P:1,O:2,Mg:2,Zn:1,Fe:1|
+noix_grenoble|Noix de Grenoble|noi|1|O:2,Mg:1|
+amandes|Amandes|noi|1|E:2,Mg:2,Ca:1,F:1|
+farine_amande|Farine d'amande|noi|1|E:2,Mg:1|
+beurre_arachide|Beurre d'arachide naturel|noi|1|P:1,E:1,Mg:1|
+tournesol|Graines de tournesol|noi|1|E:2,Mg:1,Zn:1|
+graines_citrouille|Graines de citrouille|noi|1|Mg:2,Zn:2,Fe:1|
+cajou|Noix de cajou|noi|1|Mg:1,Zn:1,Fe:1|
+yaourt_grec|Yaourt grec|lai|0|P:2,Ca:1,B12:1,I:1|
+lait_soja|Lait de soja enrichi|lai|0|P:1,Ca:2,D:1,B12:1|
+lait_amande|Lait d'amande enrichi|lai|0|Ca:2,D:1,E:1,B12:1|
+lait_vache|Lait de vache|lai|0|P:1,Ca:2,D:2,B12:1,I:2|
+kefir|Kéfir|lai|0|P:1,Ca:2,B12:1|
+fromage|Fromage|lai|0|P:1,Ca:2,B12:1|g:1,n:1
+creme|Crème (15 % ou plus)|lai|0||g:1
+banane|Banane|fru|1|Po:2,C:1|
+pomme|Pomme|fru|1|F:1|
+orange|Orange|fru|1|C:2,B9:1,F:1|
+petits_fruits|Petits fruits (bleuets, fraises…)|fru|1|C:2,F:1,K:1|
+kiwi|Kiwi|fru|1|C:2,K:1,F:1|
+dattes|Dattes Medjool|fru|1|F:1,Po:1,Mg:1|
+avocat|Avocat|fru|1|F:2,Po:2,K:1,E:1,B9:1|
+mangue|Mangue|fru|1|A:1,C:2|
+raisins_secs|Raisins secs|fru|1|Po:1,Fe:1|
+cacao|Cacao non sucré|aut|1|Mg:2,Fe:2,F:1,Zn:1|
+levure|Levure alimentaire enrichie|aut|0|B12:2,B9:2,P:1,Zn:1|
+proteine_riz|Protéine de riz brun|aut|0|P:2,Fe:1|
+proteine_pois|Protéine de pois|aut|0|P:2,Fe:2|
+huile_olive|Huile d'olive|aut|0|E:1,K:1|
+algues|Algues (nori…)|aut|1|I:2|
+sel_iode|Sel iodé|aut|0|I:2|
+sirop_erable|Sirop d'érable|aut|0||s:1
+sauce_soja|Sauce soya|aut|0||n:2
+cookie|Cookie / biscuits|pla|0||s:2,g:2
+chocolat_lait|Chocolat au lait / Kinder|pla|0||s:2,g:2
+chocolat_noir|Chocolat noir 70 % et plus|pla|0|Mg:1,Fe:1|g:1
+creme_glacee|Crème glacée|pla|0|Ca:1|s:2,g:2
+patisserie|Pâtisserie / gâteau|pla|0||s:2,g:2
+chips|Chips|pla|0||n:2,g:1
+pizza|Pizza|pla|0|P:1,Ca:1|n:2,g:2
+frites|Frites|pla|0||n:1,g:1
+boisson_sucree|Boisson sucrée / jus|pla|0||s:2
+alcool|Alcool (bière, vin, cocktail)|pla|0||s:1
+`;
+
+function parseKV(s){ const o={}; if(!s) return o; s.split(",").forEach(p=>{const [k,v]=p.split(":"); if(k) o[k.trim()]=Number(v)||1;}); return o; }
+const BASE = RAW.trim().split("\n").map(l=>{
+  const [id,name,fam,plant,nut,flags] = l.split("|");
+  return {id,name,fam,plant:plant==="1",nut:parseKV(nut),flags:parseKV(flags)};
+});
+
+const MEALS = [["pdj","Petit-déj"],["diner","Dîner"],["collation","Collation"],["souper","Souper"],["extra","Extra"]];
+const PRESETS = [
+  {name:"Mon petit-déj", meal:"pdj", items:["yaourt_grec","lait_soja","cacao","proteine_riz","granola","chia"]},
+  {name:"Mon dîner", meal:"diner", items:["pain_proteine","oeufs","hummus","huile_olive","levure"]},
+  {name:"Ma barre", meal:"collation", items:["beurre_arachide","proteine_riz","farine_amande","chia","dattes"]},
+  {name:"Mon shake", meal:"collation", items:["proteine_riz","lait_soja"]}
+];
+
+/* ---------- État et stockage ---------- */
+const KEY = "diversite-alimentaire-v1";
+let state = {log:[], custom:[]};
+try{ const raw = localStorage.getItem(KEY); if(raw){ const s = JSON.parse(raw); if(s && Array.isArray(s.log)) state = {log:s.log, custom:Array.isArray(s.custom)?s.custom:[]}; } }catch(e){}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){ toast("Sauvegarde impossible sur cet appareil"); } }
+
+function foods(){ return BASE.concat(state.custom); }
+function foodMap(){ const m={}; foods().forEach(f=>m[f.id]=f); return m; }
+
+/* ---------- Dates ---------- */
+const pad = n=>String(n).padStart(2,"0");
+const fmt = d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const parse = s=>{const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d);};
+const diffDays = (a,b)=>Math.round((parse(b)-parse(a))/86400000);
+const today = ()=>fmt(new Date());
+let curDate = today();
+let curMeal = defaultMeal();
+let curFam = "all";
+
+function defaultMeal(){ const h=new Date().getHours(); if(h<11) return "pdj"; if(h<15) return "diner"; if(h<18) return "collation"; return "souper"; }
+
+/* ---------- Utilitaires ---------- */
+const $ = s=>document.querySelector(s);
+const esc = s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const norm = s=>s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+const famColor = f=>`var(${(FAMS[f]||FAMS.aut).c})`;
+let toastT;
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("on"); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("on"),1800); }
+const uid = ()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+
+function weekEntries(){ const t=today(); return state.log.filter(e=>{const k=diffDays(e.d,t); return k>=0 && k<=6;}); }
+function lastEatenMap(){ const m={}; state.log.forEach(e=>{ if(!m[e.f] || e.d>m[e.f]) m[e.f]=e.d; }); return m; }
+function agoText(d){ if(!d) return "jamais noté"; const k=diffDays(d,today()); return k===0?"aujourd'hui":k===1?"hier":`il y a ${k} j`; }
+
+/* ---------- Onglet Ajouter ---------- */
+function addEntries(ids, meal){
+  ids.forEach(f=>state.log.push({id:uid(), d:curDate, m:meal, f}));
+  save(); renderAll();
+}
+function renderAdd(){
+  const t=today();
+  const k=diffDays(curDate,t);
+  const d=parse(curDate);
+  $("#dayLabel").textContent = k===0?"Aujourd'hui":k===1?"Hier":d.toLocaleDateString("fr-CA",{weekday:"long",day:"numeric",month:"long"});
+  const dayItems = state.log.filter(e=>e.d===curDate);
+  $("#dayCount").textContent = dayItems.length? `${dayItems.length} aliment${dayItems.length>1?"s":""} noté${dayItems.length>1?"s":""}` : "Rien de noté pour l'instant";
+  $("#nextDay").disabled = k<=0;
+
+  $("#meals").innerHTML = MEALS.map(([id,n])=>`<button data-meal="${id}" aria-pressed="${id===curMeal}">${n}</button>`).join("");
+
+  const fm=foodMap();
+  $("#shortcuts").innerHTML = PRESETS.map((p,i)=>`<button data-preset="${i}"><b>${esc(p.name)}</b><span>${p.items.length} aliments, en un clic</span></button>`).join("");
+
+  $("#famFilter").innerHTML = `<button data-fam="all" aria-pressed="${curFam==="all"}">Tout</button>` +
+    Object.keys(FAMS).map(f=>`<button data-fam="${f}" aria-pressed="${curFam===f}">${FAMS[f].e} ${FAMS[f].n}</button>`).join("");
+
+  const q = norm($("#search").value.trim());
+  const counts={}; dayItems.filter(e=>e.m===curMeal).forEach(e=>counts[e.f]=(counts[e.f]||0)+1);
+  const list = foods().filter(f=>(curFam==="all"||f.fam===curFam) && (!q || norm(f.name).includes(q)));
+  $("#foods").innerHTML = list.length ? list.map(f=>`<button class="chip" data-food="${esc(f.id)}"><span class="dot" style="background:${famColor(f.fam)}"></span>${esc(f.name)}${counts[f.id]?`<span class="n">${counts[f.id]}</span>`:""}</button>`).join("")
+    : `<p class="muted small">Aucun aliment trouvé. Ajoute-le en aliment perso plus bas.</p>`;
+
+  const byMeal = MEALS.map(([id,n])=>{
+    const its = dayItems.filter(e=>e.m===id);
+    if(!its.length) return "";
+    return `<div class="meal"><h3>${n}</h3><div class="items">${its.map(e=>{const f=fm[e.f]; return `<span class="it">${esc(f?f.name:e.f)}<button data-del="${e.id}" aria-label="Retirer ${esc(f?f.name:e.f)}">×</button></span>`;}).join("")}</div></div>`;
+  }).join("");
+  $("#dayLog").innerHTML = byMeal || `<p class="empty">Choisis un repas en haut, puis touche un raccourci ou des aliments pour les noter.</p>`;
+}
+
+/* ---------- Onglet Diversité ---------- */
+function renderDiv(){
+  const fm=foodMap(), wk=weekEntries(), last=lastEatenMap();
+  const plants=[]; const seen={};
+  wk.forEach(e=>{const f=fm[e.f]; if(f&&f.plant&&!seen[f.id]){seen[f.id]=1; plants.push(f);} });
+  plants.sort((a,b)=>Object.keys(FAMS).indexOf(a.fam)-Object.keys(FAMS).indexOf(b.fam));
+  const n=plants.length;
+  $("#plantCount").textContent=n;
+  $("#plantMsg").textContent = n>=30?"Objectif atteint : ton alimentation est très variée cette semaine."
+    : n>=20?`Très bonne variété. Encore ${30-n} pour atteindre 30.`
+    : n>0?`Encore ${30-n} végétaux différents pour atteindre 30. Les épices, noix et graines comptent aussi.`
+    : "Note tes repas pour voir ta variété de végétaux se remplir.";
+  let cells="";
+  for(let i=0;i<30;i++){ const f=plants[i]; cells += f?`<i class="f" style="background:${famColor(f.fam)}" title="${esc(f.name)}"></i>`:"<i></i>"; }
+  $("#basket").innerHTML=cells;
+  $("#plantNames").innerHTML = plants.map(f=>`<span><span class="dot" style="background:${famColor(f.fam)}"></span>${esc(f.name)}</span>`).join("") + (n>30?`<span>+${n-30} au-delà de 30</span>`:"");
+
+  function famRow(fam){
+    const famFoods = foods().filter(f=>f.fam===fam);
+    const ids = new Set(famFoods.map(f=>f.id));
+    let lastD=null; Object.keys(last).forEach(id=>{ if(ids.has(id) && (!lastD||last[id]>lastD)) lastD=last[id]; });
+    const varieties = new Set(wk.filter(e=>ids.has(e.f)).map(e=>e.f)).size;
+    const k = lastD?diffDays(lastD,today()):Infinity;
+    const st = k<=2?"good":k<=5?"mid":"low";
+    const known = famFoods.filter(f=>last[f.id] && diffDays(last[f.id],today())>6).sort((a,b)=>last[a.id]<last[b.id]?-1:1);
+    const fresh = famFoods.filter(f=>!last[f.id]);
+    const dayN = parse(today()).getDate();
+    const sug=[];
+    if(known[0]) sug.push(`À ressortir : <b>${esc(known[0].name)}</b> (${agoText(last[known[0].id])})`);
+    if(fresh.length) sug.push(`À essayer : <b>${esc(fresh[dayN%fresh.length].name)}</b>`);
+    return `<div class="famrow" style="border-left-color:var(--${st==="good"?"good":st==="mid"?"mid":"low"})">
+      <span class="em" aria-hidden="true">${FAMS[fam].e}</span>
+      <h3>${FAMS[fam].n}<small class="st-${st}">${lastD?agoText(lastD):"jamais noté"}</small></h3>
+      <p class="small muted">${varieties} variété${varieties>1?"s":""} cette semaine</p>
+      <p class="sug">${sug.join("<br>")||"Bonne rotation dans cette famille."}</p>
+    </div>`;
+  }
+  $("#supperFams").innerHTML = SUPPER.map(famRow).join("");
+  $("#otherFams").innerHTML = ["fru","noi"].map(famRow).join("");
+}
+
+/* ---------- Onglet Nutriments ---------- */
+function renderNut(){
+  const fm=foodMap(), wk=weekEntries(), last=lastEatenMap();
+  if(!wk.length){ $("#nutBody").innerHTML=`<p class="empty" style="padding-left:0">Note quelques repas dans l'onglet Ajouter : ton récapitulatif apparaîtra ici.</p>`; return; }
+  const score={}, src={}, wscore={}, wsrc={};
+  wk.forEach(e=>{ const f=fm[e.f]; if(!f) return;
+    Object.entries(f.nut).forEach(([k,v])=>{ score[k]=(score[k]||0)+v; (src[k]=src[k]||new Set()).add(f.name); });
+    Object.entries(f.flags).forEach(([k,v])=>{ wscore[k]=(wscore[k]||0)+v; (wsrc[k]=wsrc[k]||new Set()).add(f.name); });
+  });
+  const rows = NUT.map(([k,n,why,t])=>{ const s=score[k]||0; const pct=s/t; return {k,n,why,t,s,pct,st:pct<.5?"low":pct<1?"mid":"good"}; });
+
+  function suggestions(k){
+    let c = foods().filter(f=>f.fam!=="pla" && f.nut[k]===2);
+    if(c.length<4) c = c.concat(foods().filter(f=>f.fam!=="pla" && f.nut[k]===1));
+    c.sort((a,b)=>{ const la=last[a.id]||"", lb=last[b.id]||""; if(!!la!==!!lb) return la?-1:1; return la<lb?-1:la>lb?1:0; });
+    return c.slice(0,7).map(f=>`<span class="${last[f.id]?"k":""}">${last[f.id]?"✓ ":""}${esc(f.name)}</span>`).join("");
+  }
+  function card(r){
+    const lbl = r.st==="low"?"Manque":r.st==="mid"?"Un peu bas":"Bon niveau";
+    const s = src[r.k]?[...src[r.k]].join(", "):"aucune cette semaine";
+    return `<div class="ncard">
+      <div class="top"><h3>${r.n}</h3><span class="badge bg-${r.st}">${lbl}</span></div>
+      <div class="bar"><i class="bg-${r.st}" style="width:${Math.min(100,Math.round(r.pct*100))}%"></i></div>
+      <p class="why">${r.why}${NOTES[r.k]?" "+NOTES[r.k]:""}</p>
+      <p class="lst"><b>Tes sources :</b> ${esc(s)}</p>
+      ${r.st!=="good"?`<p class="lst"><b>À ajouter prochainement :</b></p><div class="sugg">${suggestions(r.k)}</div>`:""}
+    </div>`;
+  }
+  const low=rows.filter(r=>r.st==="low"), mid=rows.filter(r=>r.st==="mid"), good=rows.filter(r=>r.st==="good");
+  const watch = WATCH.map(([k,n,why])=>{ const s=wscore[k]||0; const st=s<=4?"good":s<=9?"mid":"low"; return {k,n,why,s,st}; });
+  const tooMuch = watch.filter(w=>w.st!=="good").length;
+
+  let h = `<div class="summary">
+    <div><b class="st-low">${low.length}</b><span class="small">manque</span></div>
+    <div><b class="st-mid">${mid.length}</b><span class="small">un peu bas</span></div>
+    <div><b class="st-good">${good.length}</b><span class="small">bon niveau</span></div>
+    <div><b class="${tooMuch?"st-mid":"st-good"}">${tooMuch}</b><span class="small">en trop</span></div>
+  </div>`;
+  if(low.length) h += `<h2>À ajouter en priorité</h2>` + low.map(card).join("");
+  if(mid.length) h += `<h2>Un peu bas</h2>` + mid.map(card).join("");
+  h += `<h2>Potentiellement en trop</h2>` + watch.map(w=>{
+    const lbl = w.st==="good"?"Normal":w.st==="mid"?"Un peu élevé":"Élevé";
+    const s = wsrc[w.k]?[...wsrc[w.k]].join(", "):"rien cette semaine";
+    return `<div class="ncard"><div class="top"><h3>${w.n}</h3><span class="badge bg-${w.st}">${lbl}</span></div>
+      <p class="why" style="margin-top:6px">${w.why}</p><p class="lst"><b>Venant de :</b> ${esc(s)}</p></div>`;
+  }).join("");
+  if(good.length) h += `<h2>Bon niveau</h2><div class="compact">${good.map(r=>`<span>✓ ${r.n}</span>`).join("")}</div>`;
+  $("#nutBody").innerHTML = h;
+}
+
+function renderAll(){ renderAdd(); renderDiv(); renderNut(); }
+
+/* ---------- Événements ---------- */
+document.addEventListener("click", ev=>{
+  const b = ev.target.closest("button"); if(!b) return;
+  if(b.dataset.tab){
+    document.querySelectorAll("nav.tabs button").forEach(x=>x.setAttribute("aria-selected", x===b));
+    document.querySelectorAll(".tab").forEach(s=>s.classList.toggle("on", s.id==="tab-"+b.dataset.tab));
+    window.scrollTo(0,0); return;
+  }
+  if(b.dataset.meal){ curMeal=b.dataset.meal; renderAdd(); return; }
+  if(b.dataset.fam){ curFam=b.dataset.fam; renderAdd(); return; }
+  if(b.dataset.food){ const f=foodMap()[b.dataset.food]; addEntries([b.dataset.food], curMeal); toast(`Ajouté : ${f?f.name:""}`); return; }
+  if(b.dataset.preset!==undefined){ const p=PRESETS[+b.dataset.preset]; curMeal=p.meal; addEntries(p.items, p.meal); toast(`${p.name} ajouté`); return; }
+  if(b.dataset.del){ state.log=state.log.filter(e=>e.id!==b.dataset.del); save(); renderAll(); return; }
+});
+$("#prevDay").addEventListener("click",()=>{ const d=parse(curDate); d.setDate(d.getDate()-1); curDate=fmt(d); renderAdd(); });
+$("#nextDay").addEventListener("click",()=>{ const d=parse(curDate); d.setDate(d.getDate()+1); if(fmt(d)<=today()){ curDate=fmt(d); renderAdd(); } });
+$("#search").addEventListener("input", renderAdd);
+
+/* aliment perso */
+const cNut={}, cFlag={};
+$("#cFam").innerHTML = Object.keys(FAMS).map(f=>`<option value="${f}">${FAMS[f].e} ${FAMS[f].n}</option>`).join("");
+$("#cNut").innerHTML = NUT.map(([k,n])=>`<button type="button" data-cn="${k}" aria-pressed="false">${n}</button>`).join("");
+$("#cFlag").innerHTML = WATCH.map(([k,n])=>`<button type="button" data-cf="${k}" aria-pressed="false">${n}</button>`).join("");
+$("#cNut").addEventListener("click",e=>{const b=e.target.closest("button"); if(!b) return; const k=b.dataset.cn; cNut[k]=!cNut[k]; b.setAttribute("aria-pressed",!!cNut[k]);});
+$("#cFlag").addEventListener("click",e=>{const b=e.target.closest("button"); if(!b) return; const k=b.dataset.cf; cFlag[k]=!cFlag[k]; b.setAttribute("aria-pressed",!!cFlag[k]);});
+$("#cSave").addEventListener("click",()=>{
+  const name=$("#cName").value.trim(); if(!name){ toast("Donne un nom à l'aliment"); return; }
+  const fam=$("#cFam").value;
+  const nut={}; Object.keys(cNut).forEach(k=>{ if(cNut[k]) nut[k]=2; });
+  const flags={}; Object.keys(cFlag).forEach(k=>{ if(cFlag[k]) flags[k]=2; });
+  const plant = ["cer","ver","col","leg","fru","noi"].includes(fam);
+  state.custom.push({id:"c_"+uid(), name, fam, plant, nut, flags});
+  save();
+  $("#cName").value=""; Object.keys(cNut).forEach(k=>cNut[k]=false); Object.keys(cFlag).forEach(k=>cFlag[k]=false);
+  document.querySelectorAll("#cNut button,#cFlag button").forEach(b=>b.setAttribute("aria-pressed","false"));
+  curFam=fam; renderAll(); toast(`${name} ajouté à ta liste`);
+});
+
+/* sauvegarde */
+$("#exportBtn").addEventListener("click", async ()=>{
+  const txt=JSON.stringify(state);
+  try{ await navigator.clipboard.writeText(txt); toast("Données copiées"); }
+  catch(e){ $("#importTxt").value=txt; $("#importTxt").select(); toast("Copie manuelle : le texte est sélectionné"); }
+});
+$("#importBtn").addEventListener("click",()=>{
+  try{ const s=JSON.parse($("#importTxt").value); if(!s||!Array.isArray(s.log)) throw 0;
+    state={log:s.log, custom:Array.isArray(s.custom)?s.custom:[]}; save(); $("#importTxt").value=""; renderAll(); toast("Données restaurées");
+  }catch(e){ toast("Ce texte n'est pas une copie valide de tes données"); }
+});
+let resetArmed=false, resetT;
+$("#resetBtn").addEventListener("click",e=>{
+  const b=e.currentTarget;
+  if(!resetArmed){ resetArmed=true; b.textContent="Confirmer l'effacement"; resetT=setTimeout(()=>{resetArmed=false; b.textContent="Tout effacer";},4000); return; }
+  clearTimeout(resetT); resetArmed=false; b.textContent="Tout effacer";
+  state={log:[],custom:[]}; save(); renderAll(); toast("Toutes les données ont été effacées");
+});
+
+renderAll();
+if("serviceWorker" in navigator){ window.addEventListener("load",()=>{ navigator.serviceWorker.register("sw.js").catch(()=>{}); }); }
+})();
+</script>
+</body>
+</html>
