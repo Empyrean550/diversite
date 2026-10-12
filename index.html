@@ -103,6 +103,21 @@ nav.tabs button[aria-selected="true"]{color:var(--primary);font-weight:700}
 .shortcuts button{text-align:left;background:var(--soft);border:1px dashed var(--line);border-radius:12px;padding:10px 12px}
 .shortcuts button b{display:block;font-family:var(--display);font-weight:600}
 .shortcuts button span{font-size:.8rem;color:var(--muted)}
+.shortcuts button.menu{background:var(--surface);border-style:solid;border-color:var(--primary)}
+.shortcuts .hint{grid-column:1/-1;font-size:.82rem;color:var(--muted);margin:2px 2px 0}
+.day .mh{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+.day .mh h3{margin:0}
+.savemenu{border:0;background:none;color:var(--primary);font-size:.8rem;font-weight:700;padding:6px 0}
+.daypick{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.daypick button{border:1.5px solid var(--line);background:var(--bg);border-radius:10px;padding:6px 0;display:flex;flex-direction:column;align-items:center;line-height:1.2}
+.daypick button .wd{font-size:.68rem;color:var(--muted);text-transform:uppercase}
+.daypick button .dn{font-family:var(--display);font-weight:600}
+.daypick button.today{border-color:var(--primary)}
+.daypick button[aria-pressed="true"]{background:var(--primary);border-color:var(--primary);color:var(--primary-ink)}
+.daypick button[aria-pressed="true"] .wd{color:inherit}
+.sheet-sec{margin-top:14px}
+.sheet-sec > label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:6px}
+.linkdel{border:0;background:none;color:var(--low);font-size:.85rem;font-weight:700;margin-top:14px;padding:6px 0}
 
 .search{width:100%;margin-top:16px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--surface)}
 .fams{display:flex;gap:6px;overflow-x:auto;margin:10px 0 4px;scrollbar-width:none}
@@ -284,6 +299,24 @@ details.box .body{padding:4px 0 14px;display:grid;gap:10px}
     <button class="btn ghost" id="calClose" style="width:100%;margin-top:12px">Fermer</button>
   </div>
 </div>
+<div class="calwrap" id="saveWrap" hidden>
+  <div class="calbox" role="dialog" aria-modal="true" aria-labelledby="saveTitle">
+    <h2 id="saveTitle" style="margin:0 0 6px">Enregistrer comme menu</h2>
+    <p class="small muted" id="saveItems"></p>
+    <div class="field sheet-sec"><label for="saveName">Nom du menu</label><input id="saveName" placeholder="ex. Bol patate douce et tofu" maxlength="60"></div>
+    <div class="row" style="margin-top:14px"><button class="btn" id="saveOk">Enregistrer</button><button class="btn ghost" data-close="1">Annuler</button></div>
+  </div>
+</div>
+<div class="calwrap" id="menuWrap" hidden>
+  <div class="calbox" role="dialog" aria-modal="true" aria-labelledby="menuTitle">
+    <h2 id="menuTitle" style="margin:0 0 6px"></h2>
+    <p class="small muted" id="menuItems"></p>
+    <div class="sheet-sec"><label>Repas</label><div class="seg" id="menuMeal"></div></div>
+    <div class="sheet-sec"><label>Jours (touche pour sélectionner)</label><div class="daypick" id="menuDays"></div></div>
+    <div class="row" style="margin-top:16px"><button class="btn" id="menuAdd">Ajouter</button><button class="btn ghost" data-close="1">Annuler</button></div>
+    <button class="linkdel" id="menuDel">Supprimer ce menu</button>
+  </div>
+</div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -462,8 +495,8 @@ const PRESETS = [
 
 /* ---------- État et stockage ---------- */
 const KEY = "diversite-alimentaire-v1";
-let state = {log:[], custom:[]};
-try{ const raw = localStorage.getItem(KEY); if(raw){ const s = JSON.parse(raw); if(s && Array.isArray(s.log)) state = {log:s.log, custom:Array.isArray(s.custom)?s.custom:[]}; } }catch(e){}
+let state = {log:[], custom:[], menus:[]};
+try{ const raw = localStorage.getItem(KEY); if(raw){ const s = JSON.parse(raw); if(s && Array.isArray(s.log)) state = {log:s.log, custom:Array.isArray(s.custom)?s.custom:[], menus:Array.isArray(s.menus)?s.menus:[]}; } }catch(e){}
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){ toast("Sauvegarde impossible sur cet appareil"); } }
 
 function usedCnf(){ const seen={}, out=[]; state.log.forEach(e=>{ if(e.f.startsWith("cnf") && !seen[e.f]){ seen[e.f]=1; const f=cnfMap()[e.f]; if(f) out.push(f); } }); return out; }
@@ -477,6 +510,8 @@ const fmt = d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
 const parse = s=>{const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d);};
 const diffDays = (a,b)=>Math.round((parse(b)-parse(a))/86400000);
 const today = ()=>fmt(new Date());
+const addDays = (s,n)=>{ const d=parse(s); d.setDate(d.getDate()+n); return fmt(d); };
+const maxDay = ()=>addDays(today(),14);
 let curDate = today();
 let curMeal = defaultMeal();
 const openFams = new Set();
@@ -505,15 +540,17 @@ function renderAdd(){
   const t=today();
   const k=diffDays(curDate,t);
   const d=parse(curDate);
-  $("#dayLabel").textContent = k===0?"Aujourd'hui":k===1?"Hier":d.toLocaleDateString("fr-CA",{weekday:"long",day:"numeric",month:"long"});
+  $("#dayLabel").textContent = k===0?"Aujourd'hui":k===1?"Hier":k===-1?"Demain":d.toLocaleDateString("fr-CA",{weekday:"long",day:"numeric",month:"long"});
   const dayItems = state.log.filter(e=>e.d===curDate);
-  $("#dayCount").textContent = dayItems.length? `${dayItems.length} aliment${dayItems.length>1?"s":""} noté${dayItems.length>1?"s":""}` : "Rien de noté pour l'instant";
+  $("#dayCount").textContent = dayItems.length? `${dayItems.length} aliment${dayItems.length>1?"s":""} ${k<0?"prévu":"noté"}${dayItems.length>1?"s":""}` : (k<0?"Rien de prévu pour l'instant":"Rien de noté pour l'instant");
   renderWeek();
 
   $("#meals").innerHTML = MEALS.map(([id,n])=>`<button data-meal="${id}" aria-pressed="${id===curMeal}">${n}</button>`).join("");
 
   const fm=foodMap();
-  $("#shortcuts").innerHTML = PRESETS.map((p,i)=>`<button data-preset="${i}"><b>${esc(p.name)}</b><span>${p.items.length} aliments, en un clic</span></button>`).join("");
+  $("#shortcuts").innerHTML = PRESETS.map((p,i)=>`<button data-preset="${i}"><b>${esc(p.name)}</b><span>${p.items.length} aliments, en un clic</span></button>`).join("")
+    + state.menus.map((m,i)=>`<button class="menu" data-menu="${i}"><b>🍱 ${esc(m.name)}</b><span>${m.items.length} aliments, sur un ou plusieurs jours</span></button>`).join("")
+    + (state.menus.length?"":`<p class="hint">🍱 Batch cooking : note ton repas une fois, puis touche « Enregistrer comme menu » sous ce repas pour l'ajouter ensuite sur plusieurs jours.</p>`);
 
   const q = norm($("#search").value.trim());
   const counts={}; dayItems.filter(e=>e.m===curMeal).forEach(e=>counts[e.f]=(counts[e.f]||0)+1);
@@ -542,7 +579,7 @@ function renderAdd(){
   const byMeal = MEALS.map(([id,n])=>{
     const its = dayItems.filter(e=>e.m===id);
     if(!its.length) return "";
-    return `<div class="meal"><h3>${n}</h3><div class="items">${its.map(e=>{const f=fm[e.f]; return `<span class="it">${esc(f?f.name:e.f)}<button data-del="${e.id}" aria-label="Retirer ${esc(f?f.name:e.f)}">×</button></span>`;}).join("")}</div></div>`;
+    return `<div class="meal"><div class="mh"><h3>${n}</h3><button class="savemenu" data-savemeal="${id}">💾 Enregistrer comme menu</button></div><div class="items">${its.map(e=>{const f=fm[e.f]; return `<span class="it">${esc(f?f.name:e.f)}<button data-del="${e.id}" aria-label="Retirer ${esc(f?f.name:e.f)}">×</button></span>`;}).join("")}</div></div>`;
   }).join("");
   $("#dayLog").innerHTML = byMeal || `<p class="empty">Choisis un repas en haut, puis touche un raccourci ou des aliments pour les noter.</p>`;
 }
@@ -648,10 +685,10 @@ function renderWeek(){
   for(let i=0;i<7;i++){
     const d=new Date(start); d.setDate(start.getDate()+i); const s=fmt(d);
     const wd=d.toLocaleDateString("fr-CA",{weekday:"short"}).replace(".","").slice(0,3);
-    h+=`<button class="dcell${s===t?" today":""}" data-day="${s}" aria-pressed="${s===curDate}" ${s>t?"disabled":""} aria-label="${d.toLocaleDateString("fr-CA",{weekday:"long",day:"numeric",month:"long"})}"><span class="wd">${wd}</span><span class="dn">${d.getDate()}</span>${dots(byDay[s])}</button>`;
+    h+=`<button class="dcell${s===t?" today":""}" data-day="${s}" aria-pressed="${s===curDate}" ${s>maxDay()?"disabled":""} aria-label="${d.toLocaleDateString("fr-CA",{weekday:"long",day:"numeric",month:"long"})}"><span class="wd">${wd}</span><span class="dn">${d.getDate()}</span>${dots(byDay[s])}</button>`;
   }
   const nextMon=new Date(start); nextMon.setDate(start.getDate()+7);
-  h+=`<button class="nav" data-wk="7" aria-label="Semaine suivante" ${fmt(nextMon)>t?"disabled":""}>›</button>`;
+  h+=`<button class="nav" data-wk="7" aria-label="Semaine suivante" ${fmt(nextMon)>maxDay()?"disabled":""}>›</button>`;
   $("#week").innerHTML=h;
 }
 let calMonth=null;
@@ -662,12 +699,36 @@ function renderCal(){
   const first=new Date(y,m,1), lead=(first.getDay()+6)%7, n=new Date(y,m+1,0).getDate();
   let h=""; for(let i=0;i<lead;i++) h+="<span></span>";
   for(let dd=1;dd<=n;dd++){ const s=fmt(new Date(y,m,dd)); const has=byDay[s];
-    h+=`<button class="${s===t?"today ":""}${has?"has":""}" data-calday="${s}" aria-pressed="${s===curDate}" ${s>t?"disabled":""}>${dd}${dots(has)}</button>`; }
+    h+=`<button class="${s===t?"today ":""}${has?"has":""}" data-calday="${s}" aria-pressed="${s===curDate}" ${s>maxDay()?"disabled":""}>${dd}${dots(has)}</button>`; }
   $("#calGrid").innerHTML=h;
-  $("#calNext").disabled = fmt(new Date(y,m+1,1))>t;
+  $("#calNext").disabled = fmt(new Date(y,m+1,1))>maxDay();
 }
 function openCal(){ calMonth=new Date(parse(curDate).getFullYear(),parse(curDate).getMonth(),1); renderCal(); $("#calWrap").hidden=false; $("#calClose").focus(); }
 function closeCal(){ $("#calWrap").hidden=true; $("#calBtn").focus(); }
+
+/* ---------- Menus (batch cooking) ---------- */
+let pendingSave=null, menuIdx=null, menuSel=new Set(), menuMeal="souper", delArmed=false, delT;
+function openSave(meal){
+  const items = state.log.filter(e=>e.d===curDate && e.m===meal).map(e=>e.f);
+  if(!items.length) return;
+  const fm=foodMap();
+  pendingSave={meal, items};
+  $("#saveItems").textContent = items.map(f=>fm[f]?fm[f].name:f).join(", ");
+  $("#saveName").value=""; $("#saveWrap").hidden=false; $("#saveName").focus();
+}
+function renderMenuSheet(){
+  const m=state.menus[menuIdx], fm=foodMap(), t=today();
+  $("#menuTitle").textContent="🍱 "+m.name;
+  $("#menuItems").textContent=m.items.map(f=>fm[f]?fm[f].name:f).join(", ");
+  $("#menuMeal").innerHTML=MEALS.map(([id,n])=>`<button data-mmeal="${id}" aria-pressed="${id===menuMeal}">${n}</button>`).join("");
+  let h=""; for(let i=-6;i<=7;i++){ const s=addDays(t,i), d=parse(s);
+    h+=`<button class="${s===t?"today":""}" data-pick="${s}" aria-pressed="${menuSel.has(s)}"><span class="wd">${d.toLocaleDateString("fr-CA",{weekday:"short"}).replace(".","").slice(0,3)}</span><span class="dn">${d.getDate()}</span></button>`; }
+  $("#menuDays").innerHTML=h;
+  const n=menuSel.size; $("#menuAdd").textContent = n?`Ajouter sur ${n} jour${n>1?"s":""}`:"Choisis au moins un jour"; $("#menuAdd").disabled=!n;
+  delArmed=false; $("#menuDel").textContent="Supprimer ce menu";
+}
+function openMenu(i){ menuIdx=i; menuMeal=state.menus[i].meal||"souper"; menuSel=new Set([curDate]); renderMenuSheet(); $("#menuWrap").hidden=false; $("#menuAdd").focus(); }
+function closeSheets(){ ["#saveWrap","#menuWrap","#calWrap"].forEach(s=>$(s).hidden=true); }
 
 function renderAll(){ renderAdd(); renderDiv(); renderNut(); }
 
@@ -679,8 +740,13 @@ document.addEventListener("click", ev=>{
     document.querySelectorAll(".tab").forEach(s=>s.classList.toggle("on", s.id==="tab-"+b.dataset.tab));
     window.scrollTo(0,0); return;
   }
+  if(b.dataset.close){ closeSheets(); return; }
+  if(b.dataset.savemeal){ openSave(b.dataset.savemeal); return; }
+  if(b.dataset.menu!==undefined){ openMenu(+b.dataset.menu); return; }
+  if(b.dataset.mmeal){ menuMeal=b.dataset.mmeal; renderMenuSheet(); return; }
+  if(b.dataset.pick){ const s=b.dataset.pick; if(menuSel.has(s)) menuSel.delete(s); else menuSel.add(s); renderMenuSheet(); return; }
   if(b.dataset.day){ curDate=b.dataset.day; renderAdd(); return; }
-  if(b.dataset.wk){ const d=parse(curDate); d.setDate(d.getDate()+Number(b.dataset.wk)); const s=fmt(d); curDate = s>today()?today():s; renderAdd(); return; }
+  if(b.dataset.wk){ const d=parse(curDate); d.setDate(d.getDate()+Number(b.dataset.wk)); const s=fmt(d); curDate = s>maxDay()?maxDay():s; renderAdd(); return; }
   if(b.dataset.calday){ curDate=b.dataset.calday; closeCal(); renderAdd(); return; }
   if(b.dataset.meal){ curMeal=b.dataset.meal; renderAdd(); return; }
   if(b.dataset.food){ const f=foodMap()[b.dataset.food]; addEntries([b.dataset.food], curMeal); toast(`Ajouté : ${f?f.name:""}`); return; }
@@ -688,9 +754,26 @@ document.addEventListener("click", ev=>{
   if(b.dataset.del){ state.log=state.log.filter(e=>e.id!==b.dataset.del); save(); renderAll(); return; }
 });
 $("#calBtn").addEventListener("click",openCal);
+$("#saveOk").addEventListener("click",()=>{
+  const name=$("#saveName").value.trim(); if(!name){ toast("Donne un nom à ton menu"); return; }
+  state.menus.push({id:uid(), name, meal:pendingSave.meal, items:pendingSave.items}); save();
+  $("#saveWrap").hidden=true; renderAdd(); toast(`Menu « ${name} » enregistré`);
+});
+$("#saveName").addEventListener("keydown",e=>{ if(e.key==="Enter") $("#saveOk").click(); });
+$("#menuAdd").addEventListener("click",()=>{
+  const m=state.menus[menuIdx]; if(!m || !menuSel.size) return;
+  [...menuSel].sort().forEach(d=>m.items.forEach(f=>state.log.push({id:uid(), d, m:menuMeal, f})));
+  const n=menuSel.size; save(); $("#menuWrap").hidden=true; renderAll(); toast(`${m.name} ajouté sur ${n} jour${n>1?"s":""}`);
+});
+$("#menuDel").addEventListener("click",e=>{
+  const b=e.currentTarget;
+  if(!delArmed){ delArmed=true; b.textContent="Confirmer la suppression"; clearTimeout(delT); delT=setTimeout(()=>{delArmed=false; b.textContent="Supprimer ce menu";},4000); return; }
+  const name=state.menus[menuIdx].name; state.menus.splice(menuIdx,1); save(); $("#menuWrap").hidden=true; renderAdd(); toast(`Menu « ${name} » supprimé`);
+});
+["#saveWrap","#menuWrap"].forEach(s=>$(s).addEventListener("click",e=>{ if(e.target===e.currentTarget) e.currentTarget.hidden=true; }));
 $("#calClose").addEventListener("click",closeCal);
 $("#calWrap").addEventListener("click",e=>{ if(e.target.id==="calWrap") closeCal(); });
-document.addEventListener("keydown",e=>{ if(e.key==="Escape" && !$("#calWrap").hidden) closeCal(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ if(!$("#calWrap").hidden) closeCal(); else closeSheets(); } });
 $("#calPrev").addEventListener("click",()=>{ calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()-1,1); renderCal(); });
 $("#calNext").addEventListener("click",()=>{ calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()+1,1); renderCal(); });
 $("#search").addEventListener("input", renderAdd);
@@ -724,7 +807,7 @@ $("#exportBtn").addEventListener("click", async ()=>{
 });
 $("#importBtn").addEventListener("click",()=>{
   try{ const s=JSON.parse($("#importTxt").value); if(!s||!Array.isArray(s.log)) throw 0;
-    state={log:s.log, custom:Array.isArray(s.custom)?s.custom:[]}; save(); $("#importTxt").value=""; renderAll(); toast("Données restaurées");
+    state={log:s.log, custom:Array.isArray(s.custom)?s.custom:[], menus:Array.isArray(s.menus)?s.menus:[]}; save(); $("#importTxt").value=""; renderAll(); toast("Données restaurées");
   }catch(e){ toast("Ce texte n'est pas une copie valide de tes données"); }
 });
 let resetArmed=false, resetT;
@@ -732,7 +815,7 @@ $("#resetBtn").addEventListener("click",e=>{
   const b=e.currentTarget;
   if(!resetArmed){ resetArmed=true; b.textContent="Confirmer l'effacement"; resetT=setTimeout(()=>{resetArmed=false; b.textContent="Tout effacer";},4000); return; }
   clearTimeout(resetT); resetArmed=false; b.textContent="Tout effacer";
-  state={log:[],custom:[]}; save(); renderAll(); toast("Toutes les données ont été effacées");
+  state={log:[],custom:[],menus:[]}; save(); renderAll(); toast("Toutes les données ont été effacées");
 });
 
 renderAll();
