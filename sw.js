@@ -1,5 +1,5 @@
 // Mode hors ligne : change VERSION à chaque mise à jour de l'app
-const VERSION = "v1";
+const VERSION = "v4";
 const SHELL = "shell-" + VERSION;
 const FONTS = "fonts-v1";
 const FILES = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png"];
